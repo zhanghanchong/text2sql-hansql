@@ -23,6 +23,9 @@ class Parser():
         elif 'v2' in grammar_name:
             from asdl.sql.parser.parser_v2 import ParserV2
             return ParserV2(grammar)
+        elif 'v3' in grammar_name:
+            from asdl.sql.parser.parser_v3 import ParserV3
+            return ParserV3(grammar)
         else:
             raise ValueError('Not recognized grammar name %s' % (grammar_name))
 

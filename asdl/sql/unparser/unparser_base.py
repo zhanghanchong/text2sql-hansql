@@ -22,6 +22,9 @@ class UnParser():
         elif 'v2' in grammar_name:
             from asdl.sql.unparser.unparser_v2 import UnParserV2
             return UnParserV2(grammar)
+        elif 'v3' in grammar_name:
+            from asdl.sql.unparser.unparser_v3 import UnParserV3
+            return UnParserV3(grammar)
         else:
             raise ValueError('Not recognized grammar name %s' % (grammar_name))
 

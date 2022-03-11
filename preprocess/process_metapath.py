@@ -43,7 +43,7 @@ def dfs_find_metapath(idx, metapath, metapaths, relation, used_tables, used_colu
                 dfs_find_metapath(i, new_metapath, metapaths, relation, used_tables, used_columns, is_idx_used, q_num, t_num, c_num, max_metapath_length, has_s | (i >= q_num))
     is_idx_used[idx] = False
 
-def process_metapath(dataset, tables, max_metapath_length, output_path, skip_large=False):
+def process_metapath(dataset, tables, max_metapath_length, output_path, skip_large=False, verbose=False):
     metapaths = {}
     processed_dataset_num = 0
     for entry in dataset:
@@ -83,6 +83,10 @@ def process_metapath(dataset, tables, max_metapath_length, output_path, skip_lar
         'c': c_metapaths
     }
     pickle.dump(metapaths, open(output_path, 'wb'))
+    if verbose:
+        for _, metapath_list in metapaths.items():
+            for metapath, value in metapath_list:
+                print(value, metapath, sep='\t')
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
@@ -90,9 +94,11 @@ if __name__ == '__main__':
     arg_parser.add_argument('--table_path', type=str, required=True, help='processed table path')
     arg_parser.add_argument('--max_metapath_length', type=int, required=True, help='maximum meta-path length')
     arg_parser.add_argument('--output_path', type=str, required=True, help='output preprocessed dataset')
+    arg_parser.add_argument('--skip_large', action='store_true', help='whether skip large databases')
+    arg_parser.add_argument('--verbose', action='store_true', help='whether print meta-paths')
     args = arg_parser.parse_args()
     dataset = pickle.load(open(args.dataset_path, 'rb'))
     tables = pickle.load(open(args.table_path, 'rb'))
     start_time = time.time()
-    process_metapath(dataset, tables, args.max_metapath_length, args.output_path)
+    process_metapath(dataset, tables, args.max_metapath_length, args.output_path, args.skip_large, args.verbose)
     print('Finding meta-paths costs %.4fs .' % (time.time() - start_time))

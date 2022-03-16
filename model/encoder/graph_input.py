@@ -44,7 +44,7 @@ class GraphInputLayer(nn.Module):
 
 class GraphInputLayerPLM(nn.Module):
 
-    def __init__(self, plm='bert-base-uncased', hidden_size=256, dropout=0., subword_aggregation='mean',
+    def __init__(self, plm='bert-base-uncased', hidden_size=256, dropout=0., subword_aggregation='mean-pooling',
             schema_aggregation='head+tail', lazy_load=False):
         super(GraphInputLayerPLM, self).__init__()
         self.plm_model = AutoModel.from_config(AutoConfig.from_pretrained(os.path.join('./pretrained_models', plm))) \

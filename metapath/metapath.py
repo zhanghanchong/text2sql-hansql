@@ -8,6 +8,9 @@ class Metapath:
         self.node_types.append(node_type)
         self.edge_types.append(edge_type)
 
+    def has_schema_type(self):
+        return ('table' in self.node_types) or ('column' in self.node_types)
+
     def copy(self):
         new_metapath = Metapath(self.node_types[0])
         for node_type, edge_type in zip(self.node_types[1:], self.edge_types):

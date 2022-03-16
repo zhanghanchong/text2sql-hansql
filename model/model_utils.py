@@ -63,7 +63,7 @@ def rnn_wrapper(encoder, inputs, lens, cell='lstm'):
     nonzero_num, total_num = torch.sum(sorted_lens > 0).item(), sorted_lens.size(0)
     sort_key = sort_key[:nonzero_num]
     sorted_inputs = torch.index_select(inputs, dim=0, index=sort_key)
-    # forward non empty inputs    
+    # forward non empty inputs
     packed_inputs = rnn_utils.pack_padded_sequence(sorted_inputs, sorted_lens[:nonzero_num].tolist(), batch_first=True)
     packed_out, sorted_h = encoder(packed_inputs)  # bsize x srclen x dim
     sorted_out, _ = rnn_utils.pad_packed_sequence(packed_out, batch_first=True)

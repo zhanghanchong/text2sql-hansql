@@ -11,6 +11,12 @@ class Metapath:
     def has_schema_type(self):
         return ('table' in self.node_types) or ('column' in self.node_types)
 
+    def nomatch_count(self):
+        count = 0
+        for edge_type in self.edge_types:
+            count += int('nomatch' in edge_type)
+        return count
+
     def copy(self):
         new_metapath = Metapath(self.node_types[0])
         for node_type, edge_type in zip(self.node_types[1:], self.edge_types):

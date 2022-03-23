@@ -14,14 +14,14 @@ nonlocal_relations = [
 ]
 
 def get_node_type(idx: int, q_num: int, t_num: int, c_num: int):
-    assert idx >= 0 and idx < q_num + t_num + c_num
+    assert 0 <= idx < q_num + t_num + c_num
     if idx < q_num:
         return 'question'
     if idx < q_num + t_num:
         return 'table'
     return 'column'
 
-def dfs_find_metapath(idx, metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, left_nomatch):
+def dfs_find_metapath(idx, metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, left_nomatch, nomatch_penalty):
     is_idx_used[idx] = True
     for new_idx in effective_idxs:
         cur_rel = relation[idx][new_idx]
@@ -30,12 +30,12 @@ def dfs_find_metapath(idx, metapath, metapaths, relation, effective_idxs, is_idx
             new_metapath = metapath.copy()
             new_metapath.add(get_node_type(new_idx, q_num, t_num, c_num), cur_rel)
             if new_metapath.has_schema_type():
-                metapaths[new_metapath] = metapaths.get(new_metapath, 0) + 1
+                metapaths[new_metapath] = metapaths.get(new_metapath, 0) + nomatch_penalty ** new_metapath.nomatch_count()
             if len(new_metapath) < max_metapath_length:
-                dfs_find_metapath(new_idx, new_metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, left_nomatch - is_cur_rel_nomatch)
+                dfs_find_metapath(new_idx, new_metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, left_nomatch - is_cur_rel_nomatch, nomatch_penalty)
     is_idx_used[idx] = False
 
-def process_metapath(dataset, tables, max_metapath_length, max_nomatch, output_path, skip_large=False, verbose=False):
+def process_metapath(dataset, tables, max_metapath_length, max_nomatch, nomatch_penalty, output_path, skip_large=False, verbose=False):
     metapaths = {}
     processed_dataset_num = 0
     for entry in dataset:
@@ -53,7 +53,7 @@ def process_metapath(dataset, tables, max_metapath_length, max_nomatch, output_p
         is_idx_used = [False] * (q_num + t_num + c_num)
         for idx in effective_idxs:
             metapath = Metapath(get_node_type(idx, q_num, t_num, c_num))
-            dfs_find_metapath(idx, metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, max_nomatch)
+            dfs_find_metapath(idx, metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, max_nomatch, nomatch_penalty)
         processed_dataset_num += 1
     print('In total, process %d samples, skip %d samples .' % (processed_dataset_num, len(dataset) - processed_dataset_num))
     q_metapaths, t_metapaths, c_metapaths = [], [], []
@@ -76,7 +76,7 @@ def process_metapath(dataset, tables, max_metapath_length, max_nomatch, output_p
     if verbose:
         for metapath_list in metapaths.values():
             for metapath, value in metapath_list:
-                print(value, metapath, sep='\t')
+                print('%.4f\t%s' % (value, metapath))
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
@@ -84,6 +84,7 @@ if __name__ == '__main__':
     arg_parser.add_argument('--table_path', type=str, required=True, help='processed table path')
     arg_parser.add_argument('--max_metapath_length', type=int, required=True, help='maximum meta-path length')
     arg_parser.add_argument('--max_nomatch', type=int, required=True, help='maximum nomatch in meta-path')
+    arg_parser.add_argument('--nomatch_penalty', type=float, required=True, help='penalty for nomatch')
     arg_parser.add_argument('--output_path', type=str, required=True, help='output preprocessed dataset')
     arg_parser.add_argument('--skip_large', action='store_true', help='whether skip large databases')
     arg_parser.add_argument('--verbose', action='store_true', help='whether print meta-paths')
@@ -91,5 +92,5 @@ if __name__ == '__main__':
     dataset = pickle.load(open(args.dataset_path, 'rb'))
     tables = pickle.load(open(args.table_path, 'rb'))
     start_time = time.time()
-    process_metapath(dataset, tables, args.max_metapath_length, args.max_nomatch, args.output_path, args.skip_large, args.verbose)
+    process_metapath(dataset, tables, args.max_metapath_length, args.max_nomatch, args.nomatch_penalty, args.output_path, args.skip_large, args.verbose)
     print('Finding meta-paths costs %.4fs .' % (time.time() - start_time))

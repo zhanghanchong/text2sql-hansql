@@ -9,6 +9,7 @@ vocab_glove='pretrained_models/glove.42b.300d/vocab_glove.txt'
 vocab='pretrained_models/glove.42b.300d/vocab.txt'
 max_metapath_length=3
 max_nomatch=1
+nomatch_penalty=0.05
 
 echo "Start to preprocess the original train dataset ..."
 python -u preprocess/process_dataset.py --dataset_path $train_data --raw_table_path $table_data --table_path $table_out --output_path 'data/train.bin' --skip_large
@@ -17,4 +18,4 @@ python -u preprocess/process_dataset.py --dataset_path $dev_data --table_path $t
 echo "Start to build word vocab for the dataset ..."
 python -u preprocess/build_glove_vocab.py --data_paths 'data/train.bin' --table_path $table_out --reference_file $vocab_glove --mwf 4 --output_path $vocab
 echo "Start to find meta-paths ..."
-python -u preprocess/process_metapath.py --dataset_path 'data/train.bin' --table_path $table_out --max_metapath_length $max_metapath_length --max_nomatch $max_nomatch --output_path $metapath_out
+python -u preprocess/process_metapath.py --dataset_path 'data/train.bin' --table_path $table_out --max_metapath_length $max_metapath_length --max_nomatch $max_nomatch --nomatch_penalty $nomatch_penalty --output_path $metapath_out

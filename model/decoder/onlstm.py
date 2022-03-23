@@ -119,7 +119,7 @@ class LSTMCell(nn.Module):
         """
             inputs: bsize x input_size
             hiddens: tuple of h0 (bsize x hidden_size) and c0 (bsize x hidden_size)
-            transformed_inputs: short cut for inputs, save time if seq len is already provied in training
+            transformed_inputs: short cut for inputs, save time if seq len is already provided in training
             return tuple of h1 (bsize x hidden_size) and c1 (bsize x hidden_size)
         """
         if transformed_inputs is None:

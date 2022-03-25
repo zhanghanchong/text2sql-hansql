@@ -101,10 +101,10 @@ def F1(acc, rec):
 
 def get_scores(count, pred_total, label_total):
     if pred_total != label_total:
-        return 0,0,0
+        return 0, 0, 0
     elif count == pred_total:
-        return 1,1,1
-    return 0,0,0
+        return 1, 1, 1
+    return 0, 0, 0
 
 
 def eval_sel(pred, label):
@@ -198,8 +198,8 @@ def eval_and_or(pred, label):
     label_ao = set(label_ao)
 
     if pred_ao == label_ao:
-        return 1,1,1
-    return len(pred_ao),len(label_ao),0
+        return 1, 1, 1
+    return len(pred_ao), len(label_ao), 0
 
 
 def get_nestedSQL(sql):
@@ -395,39 +395,39 @@ class Evaluator:
 
         label_total, pred_total, cnt, cnt_wo_agg = eval_sel(pred, label)
         acc, rec, f1 = get_scores(cnt, pred_total, label_total)
-        res['select'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['select'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
         acc, rec, f1 = get_scores(cnt_wo_agg, pred_total, label_total)
-        res['select(no AGG)'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['select(no AGG)'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
 
         label_total, pred_total, cnt, cnt_wo_agg = eval_where(pred, label)
         acc, rec, f1 = get_scores(cnt, pred_total, label_total)
-        res['where'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['where'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
         acc, rec, f1 = get_scores(cnt_wo_agg, pred_total, label_total)
-        res['where(no OP)'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['where(no OP)'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
 
         label_total, pred_total, cnt = eval_group(pred, label)
         acc, rec, f1 = get_scores(cnt, pred_total, label_total)
-        res['group(no Having)'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['group(no Having)'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
 
         label_total, pred_total, cnt = eval_having(pred, label)
         acc, rec, f1 = get_scores(cnt, pred_total, label_total)
-        res['group'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['group'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
 
         label_total, pred_total, cnt = eval_order(pred, label)
         acc, rec, f1 = get_scores(cnt, pred_total, label_total)
-        res['order'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['order'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
 
         label_total, pred_total, cnt = eval_and_or(pred, label)
         acc, rec, f1 = get_scores(cnt, pred_total, label_total)
-        res['and/or'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['and/or'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
 
         label_total, pred_total, cnt = eval_IUEN(pred, label)
         acc, rec, f1 = get_scores(cnt, pred_total, label_total)
-        res['IUEN'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['IUEN'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
 
         label_total, pred_total, cnt = eval_keywords(pred, label)
         acc, rec, f1 = get_scores(cnt, pred_total, label_total)
-        res['keywords'] = {'acc': acc, 'rec': rec, 'f1': f1,'label_total':label_total,'pred_total':pred_total}
+        res['keywords'] = {'acc': acc, 'rec': rec, 'f1': f1, 'label_total': label_total, 'pred_total': pred_total}
 
         return res
 
@@ -496,7 +496,7 @@ def evaluate(gold, predict, db_dir, etype, kmaps):
         scores[level] = {'count': 0, 'partial': {}, 'exact': 0.}
         scores[level]['exec'] = 0
         for type_ in partial_types:
-            scores[level]['partial'][type_] = {'acc': 0., 'rec': 0., 'f1': 0.,'acc_count':0,'rec_count':0}
+            scores[level]['partial'][type_] = {'acc': 0., 'rec': 0., 'f1': 0., 'acc_count': 0, 'rec_count': 0}
     eval_err_num = 0
     for p, g in zip(plist, glist):
         p_str = p[0]
@@ -516,22 +516,22 @@ def evaluate(gold, predict, db_dir, etype, kmaps):
         except:
             # If p_sql is not valid, then we will use an empty sql to evaluate with the correct sql
             p_sql = {
-            "except": None,
-            "from": {
-                "conds": [],
-                "table_units": []
-            },
-            "groupBy": [],
-            "having": [],
-            "intersect": None,
-            "limit": None,
-            "orderBy": [],
-            "select": [
-                False,
-                []
-            ],
-            "union": None,
-            "where": []
+                "except": None,
+                "from": {
+                    "conds": [],
+                    "table_units": []
+                },
+                "groupBy": [],
+                "having": [],
+                "intersect": None,
+                "limit": None,
+                "orderBy": [],
+                "select": [
+                    False,
+                    []
+                ],
+                "union": None,
+                "where": []
             }
             eval_err_num += 1
             print("eval_err_num:{}".format(eval_err_num))
@@ -555,8 +555,8 @@ def evaluate(gold, predict, db_dir, etype, kmaps):
             exact_score = evaluator.eval_exact_match(p_sql, g_sql)
             partial_scores = evaluator.partial_scores
             if exact_score == 0:
-                print("{} pred: {}".format(hardness,p_str))
-                print("{} gold: {}".format(hardness,g_str))
+                print("{} pred: {}".format(hardness, p_str))
+                print("{} gold: {}".format(hardness, g_str))
                 print("")
             scores[hardness]['exact'] += exact_score
             scores['all']['exact'] += exact_score
@@ -691,7 +691,7 @@ def rebuild_sql_val(sql):
 def build_valid_col_units(table_units, schema):
     col_ids = [table_unit[1] for table_unit in table_units if table_unit[0] == TABLE_TYPE['table_unit']]
     prefixs = [col_id[:-2] for col_id in col_ids]
-    valid_col_units= []
+    valid_col_units = []
     for value in schema.idMap.values():
         if '.' in value and value[:value.index('.')] in prefixs:
             valid_col_units.append(value)

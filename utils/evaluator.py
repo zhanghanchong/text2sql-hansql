@@ -80,22 +80,22 @@ class Evaluator():
         except:
             # If p_sql is not valid, then we will use an empty sql to evaluate with the correct sql
             p_sql = {
-            "except": None,
-            "from": {
-                "conds": [],
-                "table_units": []
-            },
-            "groupBy": [],
-            "having": [],
-            "intersect": None,
-            "limit": None,
-            "orderBy": [],
-            "select": [
-                False,
-                []
-            ],
-            "union": None,
-            "where": []
+                "except": None,
+                "from": {
+                    "conds": [],
+                    "table_units": []
+                },
+                "groupBy": [],
+                "having": [],
+                "intersect": None,
+                "limit": None,
+                "orderBy": [],
+                "select": [
+                    False,
+                    []
+                ],
+                "union": None,
+                "where": []
             }
         kmap = self.kmaps[db_name]
         g_valid_col_units = build_valid_col_units(g_sql['from']['table_units'], schema)

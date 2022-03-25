@@ -492,7 +492,7 @@ def parse_from(toks, start_idx, tables_with_alias, schema):
             if idx < len_ and toks[idx] == 'join':
                 idx += 1  # skip join
             idx, table_unit, table_name = parse_table_unit(toks, idx, tables_with_alias, schema)
-            table_units.append((TABLE_TYPE['table_unit'],table_unit))
+            table_units.append((TABLE_TYPE['table_unit'], table_unit))
             default_tables.append(table_name)
         if idx < len_ and toks[idx] == "on":
             idx += 1  # skip on

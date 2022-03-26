@@ -16,5 +16,5 @@ python -u preprocess/process_dataset.py --dataset_path $dev_data --table_path $t
 echo "Start to build word vocab for the dataset ..."
 python -u preprocess/build_glove_vocab.py --data_paths 'data/train.bin' --table_path $table_out --reference_file $vocab_glove --mwf 4 --output_path $vocab
 echo "Start to construct graphs for the dataset ..."
-python -u preprocess/process_graphs.py --dataset_path 'data/train.bin' --table_path $table_out --method 'lgesql' --output_path $train_out
-python -u preprocess/process_graphs.py --dataset_path 'data/dev.bin' --table_path $table_out --method 'lgesql' --output_path $dev_out
+python -u preprocess/process_lgesql_graphs.py --dataset_path 'data/train.bin' --table_path $table_out --method 'lgesql' --output_path $train_out
+python -u preprocess/process_lgesql_graphs.py --dataset_path 'data/dev.bin' --table_path $table_out --method 'lgesql' --output_path $dev_out

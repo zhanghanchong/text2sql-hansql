@@ -1,5 +1,5 @@
 #coding=utf8
-import sys, os
+import os
 
 EXP_PATH = 'exp'
 
@@ -12,7 +12,8 @@ def hyperparam_path(args):
     return exp_path
 
 def hyperparam_path_text2sql(args):
-    task = 'task_%s__model_%s_view_%s' % (args.task, args.model, args.local_and_nonlocal)
+    task = 'task_%s__model_%s' % (args.task, args.model)
+    task += '' if args.local_and_nonlocal is None else '_view_%s' % (args.local_and_nonlocal)
     task += '' if 'without' in args.output_model else '_gp_%s' % (args.smoothing)
     # encoder params
     exp_path = 'emb_%s' % (args.embed_size) if args.plm is None else 'plm_%s' % (args.plm)

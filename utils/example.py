@@ -1,7 +1,5 @@
 #coding=utf8
-import os, pickle, json
-import torch, random
-import numpy as np
+import os, pickle, random
 from asdl.asdl import ASDLGrammar
 from asdl.transition_system import TransitionSystem
 from utils.constants import UNK, GRAMMAR_FILEPATH, SCHEMA_TYPES, RELATIONS
@@ -13,9 +11,8 @@ from utils.evaluator import Evaluator
 from itertools import chain
 
 class Example():
-
     @classmethod
-    def configuration(cls, plm=None, method='lgesql', table_path='data/tables.json', tables='data/tables.bin', db_dir='data/database'):
+    def configuration(cls, plm=None, method='hansql', table_path='data/tables.json', tables='data/tables.bin', db_dir='data/database'):
         cls.plm, cls.method = plm, method
         cls.grammar = ASDLGrammar.from_filepath(GRAMMAR_FILEPATH)
         cls.trans = TransitionSystem.get_class_by_lang('sql')(cls.grammar)

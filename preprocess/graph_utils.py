@@ -79,7 +79,7 @@ class GraphProcessor():
         c_num = len(db['processed_column_toks'])
         assert q_num + t_num + c_num == len(relation)
         graph = GraphExample()
-        graph.graphs = []
+        graph.graphs = {'q': [], 't': [], 'c': []}
 
         def get_range_by_node_type(node_type: str):
             if node_type == 'q':
@@ -114,18 +114,19 @@ class GraphProcessor():
                         src_ids.append(neighbor)
                         dst_ids.append(i - get_range_by_node_type(start_node_type)[0])
                 if start_node_type == end_node_type:
-                    graph.graphs.append((dgl.graph((src_ids, dst_ids), num_nodes=eval(end_node_type + '_num'), idtype=torch.int32),
-                        end_node_type, start_node_type))
+                    graph.graphs[start_node_type].append((dgl.graph((src_ids, dst_ids), num_nodes=eval(end_node_type + '_num'), idtype=torch.int32), end_node_type))
                 else:
-                    graph.graphs.append((dgl.heterograph({
+                    graph.graphs[start_node_type].append((dgl.heterograph({
                         ('src', 'to', 'dst'): (src_ids, dst_ids)
                     }, num_nodes_dict={
                         'src': eval(end_node_type + '_num'),
                         'dst': eval(start_node_type + '_num')
-                    }, idtype=torch.int32), end_node_type, start_node_type))
+                    }, idtype=torch.int32), end_node_type))
         # graph pruning for nodes
         s_num = t_num + c_num
         graph.question_mask = [1] * q_num + [0] * s_num
+        graph.table_mask = [0] * q_num + [1] * t_num + [0] * c_num
+        graph.column_mask = [0] * (q_num + t_num) + [1] * c_num
         graph.schema_mask = [0] * q_num + [1] * s_num
         graph.gp = dgl.heterograph({
             ('question', 'to', 'schema'): (list(range(q_num)) * s_num, [i for i in range(s_num) for _ in range(q_num)])

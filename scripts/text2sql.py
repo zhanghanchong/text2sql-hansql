@@ -1,5 +1,5 @@
 #coding=utf8
-import sys, os, time, json, gc
+import gc, json, os, sys, time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from argparse import Namespace
 from utils.args import init_args

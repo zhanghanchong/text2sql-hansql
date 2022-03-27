@@ -1,17 +1,13 @@
 #coding=utf8
-import numpy as np
-import dgl, torch, math
+import dgl, torch
 
 class GraphExample():
-
     pass
 
 class BatchedGraph():
-
     pass
 
 class GraphFactory():
-
     def __init__(self, method='rgatsql', relation_vocab=None):
         super(GraphFactory, self).__init__()
         self.method = eval('self.' + method)
@@ -45,16 +41,20 @@ class GraphFactory():
         graph.lg = ex['graph'].lg
         return graph
 
+    def hansql(self, ex, db):
+        graph = GraphExample()
+        graph.graphs = ex['graph'].graphs
+        graph.gp = ex['graph'].gp
+        graph.question_mask = torch.tensor(ex['graph'].question_mask, dtype=torch.bool)
+        graph.table_mask = torch.tensor(ex['graph'].table_mask, dtype=torch.bool)
+        graph.column_mask = torch.tensor(ex['graph'].column_mask, dtype=torch.bool)
+        graph.schema_mask = torch.tensor(ex['graph'].schema_mask, dtype=torch.bool)
+        graph.node_label = torch.tensor(ex['graph'].node_label, dtype=torch.float)
+        return graph
+
     def batch_graphs(self, ex_list, device, train=True, **kwargs):
         """ Batch graphs in example list """
         return self.batch_method(ex_list, device, train=train, **kwargs)
-
-    def batch_lgesql(self, ex_list, device, train=True, **kwargs):
-        bg = self.batch_rgatsql(ex_list, device, train=train, **kwargs)
-        src_ids, dst_ids = bg.local_g.edges(order='eid')
-        bg.src_ids, bg.dst_ids = src_ids.long(), dst_ids.long()
-        bg.lg = dgl.batch([ex.graph.lg for ex in ex_list]).to(device)
-        return bg
 
     def batch_rgatsql(self, ex_list, device, train=True, **kwargs):
         # method = kwargs.pop('local_and_nonlocal', 'global')
@@ -67,6 +67,32 @@ class GraphFactory():
         bg.global_edges = torch.cat([ex.global_edges for ex in graph_list], dim=0).to(device)
         if train:
             bg.question_mask = torch.cat([ex.question_mask for ex in graph_list], dim=0).to(device)
+            bg.schema_mask = torch.cat([ex.schema_mask for ex in graph_list], dim=0).to(device)
+            smoothing = kwargs.pop('smoothing', 0.0)
+            node_label = torch.cat([ex.node_label for ex in graph_list], dim=0)
+            node_label = node_label.masked_fill_(~ node_label.bool(), 2 * smoothing) - smoothing
+            bg.node_label = node_label.to(device)
+            bg.gp = dgl.batch([ex.gp for ex in graph_list]).to(device)
+        return bg
+
+    def batch_lgesql(self, ex_list, device, train=True, **kwargs):
+        bg = self.batch_rgatsql(ex_list, device, train=train, **kwargs)
+        src_ids, dst_ids = bg.local_g.edges(order='eid')
+        bg.src_ids, bg.dst_ids = src_ids.long(), dst_ids.long()
+        bg.lg = dgl.batch([ex.graph.lg for ex in ex_list]).to(device)
+        return bg
+
+    def batch_hansql(self, ex_list, device, train=True, **kwargs):
+        graph_list = [ex.graph for ex in ex_list]
+        bg = BatchedGraph()
+        bg.graphs = {'q': [], 't': [], 'c': []}
+        for node_type in ['q', 't', 'c']:
+            for i in range(len(graph_list[0].graphs[node_type])):
+                bg.graphs[node_type].append((dgl.batch([ex.graphs[node_type][i][0] for ex in graph_list]).to(device), graph_list[0].graphs[node_type][i][1]))
+        bg.question_mask = torch.cat([ex.question_mask for ex in graph_list], dim=0).to(device)
+        bg.table_mask = torch.cat([ex.table_mask for ex in graph_list], dim=0).to(device)
+        bg.column_mask = torch.cat([ex.column_mask for ex in graph_list], dim=0).to(device)
+        if train:
             bg.schema_mask = torch.cat([ex.schema_mask for ex in graph_list], dim=0).to(device)
             smoothing = kwargs.pop('smoothing', 0.0)
             node_label = torch.cat([ex.node_label for ex in graph_list], dim=0)

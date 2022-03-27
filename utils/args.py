@@ -12,6 +12,8 @@ def init_args(params=sys.argv[1:]):
         opt.local_and_nonlocal = 'global'
     if opt.model == 'lgesql' and opt.local_and_nonlocal == 'global':
         opt.local_and_nonlocal = 'msde'
+    if opt.model == 'hansql':
+        opt.local_and_nonlocal = None
     return opt
 
 def add_argument_base(arg_parser):
@@ -37,7 +39,7 @@ def add_argument_base(arg_parser):
 
 def add_argument_encoder(arg_parser):
     # Encoder Hyperparams
-    arg_parser.add_argument('--model', choices=['rgatsql', 'lgesql'], default='lgesql', help='which text2sql model to use')
+    arg_parser.add_argument('--model', choices=['rgatsql', 'lgesql', 'hansql'], default='hansql', help='which text2sql model to use')
     arg_parser.add_argument('--local_and_nonlocal', choices=['mmc', 'msde', 'local', 'global'], default='mmc', 
         help='how to integrate local and non-local relations: mmc -> multi-head multi-view concatenation ; msde -> mixed static and dynamic embeddings')
     arg_parser.add_argument('--output_model', choices=['without_pruning', 'with_pruning'], default='without_pruning', help='whether add graph pruning')

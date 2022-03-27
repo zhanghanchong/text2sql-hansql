@@ -4,12 +4,12 @@ import torch.nn as nn
 from model.encoder.graph_input import *
 from model.encoder.rgatsql import RGATSQL
 from model.encoder.lgesql import LGESQL
+from model.encoder.hansql import HANSQL
 from model.encoder.graph_output import *
 from model.model_utils import Registrable
 
 @Registrable.register('encoder_text2sql')
 class Text2SQLEncoder(nn.Module):
-
     def __init__(self, args):
         super(Text2SQLEncoder, self).__init__()
         lazy_load = args.lazy_load if hasattr(args, 'lazy_load') else False

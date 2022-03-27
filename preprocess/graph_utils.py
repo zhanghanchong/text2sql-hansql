@@ -43,10 +43,11 @@ class GraphProcessor():
         graph.question_mask = [1] * q_num + [0] * s_num
         graph.schema_mask = [0] * q_num + [1] * s_num
         graph.gp = dgl.heterograph({
-            ('question', 'to', 'schema'): (list(range(q_num)) * s_num,
-            [i for i in range(s_num) for _ in range(q_num)])
-            }, num_nodes_dict={'question': q_num, 'schema': s_num}, idtype=torch.int32
-        )
+            ('question', 'to', 'schema'): (list(range(q_num)) * s_num, [i for i in range(s_num) for _ in range(q_num)])
+        }, num_nodes_dict={
+            'question': q_num,
+            'schema': s_num
+        }, idtype=torch.int32)
         t_num = len(db['processed_table_toks'])
 
         def check_node(i):
@@ -79,24 +80,59 @@ class GraphProcessor():
         assert q_num + t_num + c_num == len(relation)
         graph = GraphExample()
         graph.graphs = []
-        for metapath, _ in metapaths['q']:
-            for i in range(q_num):
-                pass
-        for metapath, _ in metapaths['t']:
-            for i in range(q_num, q_num + t_num):
-                pass
-        for metapath, _ in metapaths['c']:
-            for i in range(q_num + t_num, q_num + t_num + c_num):
-                pass
+
+        def get_range_by_node_type(node_type: str):
+            if node_type == 'q':
+                return range(q_num)
+            if node_type == 't':
+                return range(q_num, q_num + t_num)
+            if node_type == 'c':
+                return range(q_num + t_num, q_num + t_num + c_num)
+            raise ValueError('wrong node type %s' % node_type)
+
+        def dfs_find_metapath_based_neighbors(idx: int, step: int):
+            if step == len(metapath):
+                return {idx}
+            is_idx_used[idx] = True
+            result = set()
+            for new_idx in get_range_by_node_type(metapath.node_types[step + 1][0]):
+                if relation[idx][new_idx] == metapath.edge_types[step] and (not is_idx_used[new_idx]):
+                    result.update(dfs_find_metapath_based_neighbors(new_idx, step + 1))
+            is_idx_used[idx] = False
+            return result
+
+        is_idx_used = [False] * len(relation)
+        for start_node_type in metapaths:
+            for metapath, _ in metapaths[start_node_type]:
+                end_node_type = metapath.node_types[len(metapath)][0]
+                src_ids, dst_ids = [], []
+                for i in get_range_by_node_type(start_node_type):
+                    neighbors = dfs_find_metapath_based_neighbors(i, 0)
+                    neighbors = list(map(lambda x: x - get_range_by_node_type(end_node_type)[0], neighbors))
+                    neighbors.sort()
+                    for neighbor in neighbors:
+                        src_ids.append(neighbor)
+                        dst_ids.append(i - get_range_by_node_type(start_node_type)[0])
+                if start_node_type == end_node_type:
+                    graph.graphs.append((dgl.graph((src_ids, dst_ids), num_nodes=eval(end_node_type + '_num'), idtype=torch.int32),
+                        end_node_type, start_node_type))
+                else:
+                    graph.graphs.append((dgl.heterograph({
+                        ('src', 'to', 'dst'): (src_ids, dst_ids)
+                    }, num_nodes_dict={
+                        'src': eval(end_node_type + '_num'),
+                        'dst': eval(start_node_type + '_num')
+                    }, idtype=torch.int32), end_node_type, start_node_type))
         # graph pruning for nodes
         s_num = t_num + c_num
         graph.question_mask = [1] * q_num + [0] * s_num
         graph.schema_mask = [0] * q_num + [1] * s_num
         graph.gp = dgl.heterograph({
-            ('question', 'to', 'schema'): (list(range(q_num)) * s_num,
-            [i for i in range(s_num) for _ in range(q_num)])
-            }, num_nodes_dict={'question': q_num, 'schema': s_num}, idtype=torch.int32
-        )
+            ('question', 'to', 'schema'): (list(range(q_num)) * s_num, [i for i in range(s_num) for _ in range(q_num)])
+        }, num_nodes_dict={
+            'question': q_num,
+            'schema': s_num
+        }, idtype=torch.int32)
 
         def check_node(i):
             if i < t_num and i in ex['used_tables']:

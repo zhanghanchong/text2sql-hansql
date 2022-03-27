@@ -13,29 +13,27 @@ nonlocal_relations = [
     'question-question-dist' + str(i) for i in range(-MAX_RELATIVE_DIST, MAX_RELATIVE_DIST + 1) if i not in [-1, 0, 1]
 ]
 
-def get_node_type(idx: int, q_num: int, t_num: int, c_num: int):
-    assert 0 <= idx < q_num + t_num + c_num
-    if idx < q_num:
-        return 'question'
-    if idx < q_num + t_num:
-        return 'table'
-    return 'column'
-
-def dfs_find_metapath(idx, metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, left_nomatch, nomatch_penalty):
-    is_idx_used[idx] = True
-    for new_idx in effective_idxs:
-        cur_rel = relation[idx][new_idx]
-        is_cur_rel_nomatch = 'nomatch' in cur_rel
-        if (cur_rel not in nonlocal_relations) and ((not is_cur_rel_nomatch) or (left_nomatch > 0)) and (not is_idx_used[new_idx]):
-            new_metapath = metapath.copy()
-            new_metapath.add(get_node_type(new_idx, q_num, t_num, c_num), cur_rel)
-            if new_metapath.has_schema_type():
-                metapaths[new_metapath] = metapaths.get(new_metapath, 0) + nomatch_penalty ** new_metapath.nomatch_count()
-            if len(new_metapath) < max_metapath_length:
-                dfs_find_metapath(new_idx, new_metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, left_nomatch - is_cur_rel_nomatch, nomatch_penalty)
-    is_idx_used[idx] = False
-
 def process_metapath(dataset, tables, max_metapath_length, max_nomatch, nomatch_penalty, output_path, skip_large=False, verbose=False):
+    def get_node_type(idx):
+        if idx < q_num:
+            return 'question'
+        if idx < q_num + t_num:
+            return 'table'
+        return 'column'
+
+    def dfs_find_metapath(cur_idx, cur_metapath):
+        is_idx_used[cur_idx] = True
+        for new_idx in effective_idxs:
+            cur_rel = relation[cur_idx][new_idx]
+            if (cur_rel not in nonlocal_relations) and (('nomatch' not in cur_rel) or (cur_metapath.nomatch_count() < max_nomatch)) and (not is_idx_used[new_idx]):
+                new_metapath = cur_metapath.copy()
+                new_metapath.add(get_node_type(new_idx), cur_rel)
+                if new_metapath.has_schema_type():
+                    metapaths[new_metapath] = metapaths.get(new_metapath, 0) + nomatch_penalty ** new_metapath.nomatch_count()
+                if len(new_metapath) < max_metapath_length:
+                    dfs_find_metapath(new_idx, new_metapath)
+        is_idx_used[cur_idx] = False
+
     metapaths = {}
     processed_dataset_num = 0
     for entry in dataset:
@@ -52,8 +50,8 @@ def process_metapath(dataset, tables, max_metapath_length, max_nomatch, nomatch_
         effective_idxs = list(range(q_num)) + [x + q_num for x in entry['used_tables']] + [x + q_num + t_num for x in entry['used_columns']]
         is_idx_used = [False] * (q_num + t_num + c_num)
         for idx in effective_idxs:
-            metapath = Metapath(get_node_type(idx, q_num, t_num, c_num))
-            dfs_find_metapath(idx, metapath, metapaths, relation, effective_idxs, is_idx_used, q_num, t_num, c_num, max_metapath_length, max_nomatch, nomatch_penalty)
+            metapath = Metapath(get_node_type(idx))
+            dfs_find_metapath(idx, metapath)
         processed_dataset_num += 1
     print('In total, process %d samples, skip %d samples .' % (processed_dataset_num, len(dataset) - processed_dataset_num))
     q_metapaths, t_metapaths, c_metapaths = [], [], []

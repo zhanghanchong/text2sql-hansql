@@ -25,5 +25,5 @@ python -u preprocess/build_glove_vocab.py --data_paths 'data/train.bin' --table_
 echo "Start to find meta-paths ..."
 python -u preprocess/process_metapaths.py --dataset_path 'data/train.bin' --table_path $table_out --max_metapath_length $max_metapath_length --max_nomatch $max_nomatch --nomatch_penalty $nomatch_penalty --output_path $metapath_out
 echo "Start to construct graphs for the dataset ..."
-python -u preprocess/process_graphs.py --dataset_path 'data/train.bin' --table_path $table_out --metapath_path $metapath_out --method 'hansql' --output_path $train_out
+python -u preprocess/process_graphs.py --dataset_path 'data/train.bin' --table_path $table_out --metapath_path $metapath_out --q_metapath $q_metapath --t_metapath $t_metapath --c_metapath $c_metapath --method 'hansql' --output_path $train_out
 python -u preprocess/process_graphs.py --dataset_path 'data/dev.bin' --table_path $table_out --metapath_path $metapath_out --q_metapath $q_metapath --t_metapath $t_metapath --c_metapath $c_metapath --method 'hansql' --output_path $dev_out

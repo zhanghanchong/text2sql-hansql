@@ -50,6 +50,9 @@ class GraphFactory():
         graph.column_mask = torch.tensor(ex['graph'].column_mask, dtype=torch.bool)
         graph.schema_mask = torch.tensor(ex['graph'].schema_mask, dtype=torch.bool)
         graph.node_label = torch.tensor(ex['graph'].node_label, dtype=torch.float)
+        graph.q_num = graph.question_mask.sum().item()
+        graph.t_num = graph.table_mask.sum().item()
+        graph.c_num = graph.column_mask.sum().item()
         return graph
 
     def batch_graphs(self, ex_list, device, train=True, **kwargs):
@@ -92,6 +95,9 @@ class GraphFactory():
         bg.question_mask = torch.cat([ex.question_mask for ex in graph_list], dim=0).to(device)
         bg.table_mask = torch.cat([ex.table_mask for ex in graph_list], dim=0).to(device)
         bg.column_mask = torch.cat([ex.column_mask for ex in graph_list], dim=0).to(device)
+        bg.q_num = [ex.q_num for ex in graph_list]
+        bg.t_num = [ex.t_num for ex in graph_list]
+        bg.c_num = [ex.c_num for ex in graph_list]
         if train:
             bg.schema_mask = torch.cat([ex.schema_mask for ex in graph_list], dim=0).to(device)
             smoothing = kwargs.pop('smoothing', 0.0)

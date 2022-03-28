@@ -21,6 +21,7 @@ def hyperparam_path_text2sql(args):
     exp_path += '__share' if args.relation_share_layers else ''
     exp_path += '__head_%s' % (args.num_heads)
     exp_path += '__share' if args.relation_share_heads else ''
+    exp_path += '__share' if args.node_type_share_weights else ''
     exp_path += '__dp_%s' % (args.dropout)
     exp_path += '__dpa_%s' % (args.attn_drop)
     exp_path += '__dpc_%s' % (args.drop_connect)

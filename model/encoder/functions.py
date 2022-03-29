@@ -1,5 +1,5 @@
 #coding=utf8
-import dgl, math, torch
+import torch
 
 def src_dot_dst(src_field, dst_field, out_field):
     def func(edges):
@@ -29,5 +29,11 @@ def src_sum_edge_mul_edge(src_field, e_field1, e_field2, out_field):
 def div_by_z(in_field, norm_field, out_field):
     def func(nodes):
         return {out_field: nodes.data[in_field] / nodes.data[norm_field]}
+
+    return func
+
+def div_by_z_hetero(in_field0, in_field1, norm_field0, norm_field1, out_field):
+    def func(nodes):
+        return {out_field: (nodes.data[in_field0] + nodes.data[in_field1]) / (nodes.data[norm_field0] + nodes.data[norm_field1])}
 
     return func

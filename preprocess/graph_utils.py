@@ -108,6 +108,8 @@ class GraphProcessor():
                 src_ids, dst_ids = [], []
                 for i in get_range_by_node_type(start_node_type):
                     neighbors = dfs_find_metapath_based_neighbors(i, 0)
+                    if start_node_type == end_node_type:
+                        neighbors.add(i)
                     neighbors = list(map(lambda x: x - get_range_by_node_type(end_node_type)[0], neighbors))
                     neighbors.sort()
                     for neighbor in neighbors:
@@ -116,11 +118,14 @@ class GraphProcessor():
                 if start_node_type == end_node_type:
                     graph.graphs[start_node_type].append((dgl.graph((src_ids, dst_ids), num_nodes=eval(end_node_type + '_num'), idtype=torch.int32), end_node_type))
                 else:
+                    src_num = eval(end_node_type + '_num')
+                    dst_num = eval(start_node_type + '_num')
                     graph.graphs[start_node_type].append((dgl.heterograph({
-                        ('src', 'to', 'dst'): (src_ids, dst_ids)
+                        ('src', 'to', 'dst'): (src_ids, dst_ids),
+                        ('dst', 'to', 'dst'): (list(range(dst_num)), list(range(dst_num)))
                     }, num_nodes_dict={
-                        'src': eval(end_node_type + '_num'),
-                        'dst': eval(start_node_type + '_num')
+                        'src': src_num,
+                        'dst': dst_num
                     }, idtype=torch.int32), end_node_type))
         # graph pruning for nodes
         s_num = t_num + c_num

@@ -34,6 +34,8 @@ def div_by_z(in_field, norm_field, out_field):
 
 def div_by_z_hetero(in_field0, in_field1, norm_field0, norm_field1, out_field):
     def func(nodes):
-        return {out_field: (nodes.data[in_field0] + nodes.data[in_field1]) / (nodes.data[norm_field0] + nodes.data[norm_field1])}
+        wv = nodes.data.get(in_field0, 0.) + nodes.data.get(in_field1, 0.)
+        z = nodes.data.get(norm_field0, 0.) + nodes.data.get(norm_field1, 0.)
+        return {out_field: wv / z}
 
     return func

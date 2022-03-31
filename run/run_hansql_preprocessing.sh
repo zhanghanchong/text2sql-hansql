@@ -12,9 +12,9 @@ vocab='pretrained_models/glove.42b.300d/vocab.txt'
 max_metapath_length=3
 max_nomatch=1
 nomatch_penalty=0.05
-q_metapath=2
-t_metapath=2
-c_metapath=2
+q_metapath=10
+t_metapath=16
+c_metapath=20
 
 echo "Start to preprocess the original train dataset ..."
 python -u preprocess/process_dataset.py --dataset_path $train_data --raw_table_path $table_data --table_path $table_out --output_path 'data/train.bin' --skip_large

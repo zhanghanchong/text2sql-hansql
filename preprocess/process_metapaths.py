@@ -8,7 +8,7 @@ from utils.constants import MAX_RELATIVE_DIST
 nonlocal_relations = [
     'question-question-generic', 'table-table-generic', 'column-column-generic', 'table-column-generic', 'column-table-generic',
     'table-table-fk', 'table-table-fkr', 'table-table-fkb', 'column-column-sametable',
-    'question-*-generic', '*-question-generic', '*-table-generic', '*-column-generic', 'column-*-generic', '*-*-identity',
+    'question-*-generic', '*-question-generic', '*-column-generic', 'column-*-generic', '*-*-identity',
     'question-question-identity', 'table-table-identity', 'column-column-identity'] + [
     'question-question-dist' + str(i) for i in range(-MAX_RELATIVE_DIST, MAX_RELATIVE_DIST + 1) if i not in [-1, 0, 1]
 ]
@@ -28,7 +28,7 @@ def process_metapath(dataset, tables, max_metapath_length, max_nomatch, nomatch_
             if (cur_rel not in nonlocal_relations) and (('nomatch' not in cur_rel) or (cur_metapath.nomatch_count() < max_nomatch)) and (not is_idx_used[new_idx]):
                 new_metapath = cur_metapath.copy()
                 new_metapath.add(get_node_type(new_idx), cur_rel)
-                if new_metapath.has_schema_type():
+                if new_metapath.has_schema_type() or len(new_metapath) == 1:
                     metapaths[new_metapath] = metapaths.get(new_metapath, 0) + nomatch_penalty ** new_metapath.nomatch_count()
                 if len(new_metapath) < max_metapath_length:
                     dfs_find_metapath(new_idx, new_metapath)
@@ -54,17 +54,14 @@ def process_metapath(dataset, tables, max_metapath_length, max_nomatch, nomatch_
             dfs_find_metapath(idx, metapath)
         processed_dataset_num += 1
     print('In total, process %d samples, skip %d samples .' % (processed_dataset_num, len(dataset) - processed_dataset_num))
-    q_metapaths, t_metapaths, c_metapaths = [], [], []
+    q_metapaths = [[] for _ in range(max_metapath_length)]
+    t_metapaths = [[] for _ in range(max_metapath_length)]
+    c_metapaths = [[] for _ in range(max_metapath_length)]
     for metapath, value in metapaths.items():
-        if metapath.node_types[0] == 'question':
-            q_metapaths.append((metapath, value))
-        elif metapath.node_types[0] == 'table':
-            t_metapaths.append((metapath, value))
-        elif metapath.node_types[0] == 'column':
-            c_metapaths.append((metapath, value))
-    q_metapaths.sort(key=lambda x: x[1], reverse=True)
-    t_metapaths.sort(key=lambda x: x[1], reverse=True)
-    c_metapaths.sort(key=lambda x: x[1], reverse=True)
+        eval(metapath.node_types[0][0] + '_metapaths')[len(metapath) - 1].append((metapath, value))
+    for node_type in ['q', 't', 'c']:
+        for i in range(max_metapath_length):
+            eval(node_type + '_metapaths')[i].sort(key=lambda x: x[1], reverse=True)
     metapaths = {
         'q': q_metapaths,
         't': t_metapaths,
@@ -73,8 +70,10 @@ def process_metapath(dataset, tables, max_metapath_length, max_nomatch, nomatch_
     pickle.dump(metapaths, open(output_path, 'wb'))
     if verbose:
         for metapath_list in metapaths.values():
-            for metapath, value in metapath_list:
-                print('%.4f\t%s' % (value, metapath))
+            for i in range(max_metapath_length):
+                for metapath, value in metapath_list[i]:
+                    print('%.4f\t%s' % (value, metapath))
+                print()
 
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()

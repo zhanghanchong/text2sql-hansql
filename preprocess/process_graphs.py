@@ -41,7 +41,7 @@ if __name__ == '__main__':
             for i in range(len(metapath_nums)):
                 if metapath_nums[i] >= 0 and metapath_nums[i] < len(metapaths[node_type][i]):
                     metapaths[node_type][i] = metapaths[node_type][i][:metapath_nums[i]]
-            metapaths[node_type] = chain.from_iterable(metapaths[node_type])
+            metapaths[node_type] = list(chain.from_iterable(metapaths[node_type]))
     else:
         metapaths = None
     start_time = time.time()

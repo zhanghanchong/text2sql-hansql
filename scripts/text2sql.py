@@ -73,7 +73,6 @@ if not args.testing:
     start_epoch, nsamples, best_result = 0, len(train_dataset), {'dev_acc': 0.}
     train_index, step_size = np.arange(nsamples), args.batch_size // args.grad_accumulate
     if args.read_model_path and args.load_optimizer:
-        optimizer.load_state_dict(check_point['optim'])
         scheduler.load_state_dict(check_point['scheduler'])
         start_epoch = check_point['epoch'] + 1
     logger.info('Start training ......')
@@ -111,8 +110,8 @@ if not args.testing:
         if dev_acc > best_result['dev_acc']:
             best_result['dev_acc'], best_result['iter'] = dev_acc, i
             torch.save({
-                'epoch': i, 'model': model.state_dict(),
-                'optim': optimizer.state_dict(),
+                'epoch': i,
+                'model': model.state_dict(),
                 'scheduler': scheduler.state_dict()
             }, open(os.path.join(exp_path, 'model.bin'), 'wb'))
             logger.info('NEW BEST MODEL: \tEpoch: %d\tDev acc: %.4f' % (i, dev_acc))

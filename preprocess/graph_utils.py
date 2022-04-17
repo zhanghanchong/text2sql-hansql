@@ -22,6 +22,15 @@ nonlocal_relations = [
     'question-question-dist' + str(i) for i in range(- MAX_RELATIVE_DIST, MAX_RELATIVE_DIST + 1, 1) if i not in [-1, 0, 1]
 ]
 
+
+def get_mapped_relation(relation: list):
+    for i in range(len(relation)):
+        for j in range(len(relation[i])):
+            if relation[i][j] in special_column_mapping_dict:
+                relation[i][j] = special_column_mapping_dict[relation[i][j]]
+    return relation
+
+
 class GraphProcessor():
     def process_rgatsql(self, ex: dict, db: dict, relation: list):
         graph = GraphExample()
@@ -74,6 +83,7 @@ class GraphProcessor():
         return ex
 
     def process_hansql(self, ex: dict, db: dict, metapaths: dict, relation: list):
+        relation = get_mapped_relation(relation)
         q_num = len(ex['processed_question_toks'])
         t_num = len(db['processed_table_toks'])
         c_num = len(db['processed_column_toks'])

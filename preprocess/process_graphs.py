@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from itertools import chain
 from preprocess.graph_utils import GraphProcessor
 
-def process_dataset_graph(processor, dataset, tables, metapaths=None, method='rgatsql', output_path=None, skip_large=False):
+def process_dataset_graph(processor, dataset, tables, metapaths=None, method='rgatsql', output_path=None, skip_large=False, verbose=False):
     processed_dataset = []
     for idx, entry in enumerate(dataset):
         db = tables[entry['db_id']]
@@ -12,7 +12,7 @@ def process_dataset_graph(processor, dataset, tables, metapaths=None, method='rg
             continue
         if (idx + 1) % 500 == 0:
             print('Processing the %d-th example ...' % (idx + 1))
-        entry = processor.process_graph_utils(entry, db, metapaths, method)
+        entry = processor.process_graph_utils(entry, db, metapaths, method, verbose)
         processed_dataset.append(entry)
     print('In total, process %d samples, skip %d samples .' % (len(processed_dataset), len(dataset) - len(processed_dataset)))
     if output_path is not None:
@@ -29,6 +29,8 @@ if __name__ == '__main__':
     arg_parser.add_argument('--c_metapath', type=int, nargs='+', help='numbers of meta-paths starting with column')
     arg_parser.add_argument('--method', type=str, default='hansql', choices=['rgatsql', 'lgesql', 'hansql'])
     arg_parser.add_argument('--output_path', type=str, required=True, help='output preprocessed dataset')
+    arg_parser.add_argument('--skip_large', action='store_true', help='whether skip large databases')
+    arg_parser.add_argument('--verbose', action='store_true', help='whether print statistics')
     args = arg_parser.parse_args()
     processor = GraphProcessor()
     tables = pickle.load(open(args.table_path, 'rb'))
@@ -45,5 +47,5 @@ if __name__ == '__main__':
     else:
         metapaths = None
     start_time = time.time()
-    dataset = process_dataset_graph(processor, dataset, tables, metapaths, args.method, args.output_path)
+    dataset = process_dataset_graph(processor, dataset, tables, metapaths, args.method, args.output_path, args.skip_large, args.verbose)
     print('Dataset preprocessing costs %.4fs .' % (time.time() - start_time))

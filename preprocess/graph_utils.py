@@ -82,7 +82,7 @@ class GraphProcessor():
         ex['graph'] = graph
         return ex
 
-    def process_hansql(self, ex: dict, db: dict, metapaths: dict, relation: list):
+    def process_hansql(self, ex: dict, db: dict, metapaths: dict, relation: list, verbose: bool):
         relation = get_mapped_relation(relation)
         q_num = len(ex['processed_question_toks'])
         t_num = len(db['processed_table_toks'])
@@ -111,6 +111,7 @@ class GraphProcessor():
             is_idx_used[idx] = False
             return result
 
+        all_neighbors = [{'q': set(), 't': set(), 'c': set()} for _ in range(len(relation))]
         is_idx_used = [False] * len(relation)
         for start_node_type in metapaths:
             for metapath, _ in metapaths[start_node_type]:
@@ -120,8 +121,11 @@ class GraphProcessor():
                     neighbors = dfs_find_metapath_based_neighbors(i, 0)
                     if start_node_type == end_node_type:
                         neighbors.add(i)
+                    else:
+                        all_neighbors[i][start_node_type].add(i - get_range_by_node_type(start_node_type)[0])
                     neighbors = list(map(lambda x: x - get_range_by_node_type(end_node_type)[0], neighbors))
                     neighbors.sort()
+                    all_neighbors[i][end_node_type].update(neighbors)
                     for neighbor in neighbors:
                         src_ids.append(neighbor)
                         dst_ids.append(i - get_range_by_node_type(start_node_type)[0])
@@ -137,6 +141,17 @@ class GraphProcessor():
                         'src': src_num,
                         'dst': dst_num
                     }, idtype=torch.int32), end_node_type))
+        if verbose:
+            print('type', 'q', 't', 'c', 'total', sep='\t')
+            for i in range(len(relation)):
+                print('%s\t%.4f\t%.4f\t%.4f\t%.4f' % (
+                    'q' if i < q_num else 't' if i < q_num + t_num else 'c',
+                    len(all_neighbors[i]['q']) / q_num,
+                    len(all_neighbors[i]['t']) / t_num,
+                    len(all_neighbors[i]['c']) / c_num,
+                    (len(all_neighbors[i]['q']) + len(all_neighbors[i]['t']) + len(all_neighbors[i]['c'])) / len(relation)
+                ))
+            print()
         # graph pruning for nodes
         s_num = t_num + c_num
         graph.question_mask = [1] * q_num + [0] * s_num
@@ -161,7 +176,7 @@ class GraphProcessor():
         ex['graph'] = graph
         return ex
 
-    def process_graph_utils(self, ex: dict, db: dict, metapaths: dict = None, method: str = 'rgatsql'):
+    def process_graph_utils(self, ex: dict, db: dict, metapaths: dict = None, method: str = 'rgatsql', verbose: bool = False):
         """ Example should be preprocessed by self.pipeline
         """
         q = np.array(ex['relations'], dtype='<U100')
@@ -177,5 +192,5 @@ class GraphProcessor():
         elif method == 'lgesql':
             ex = self.process_lgesql(ex, db, relation.flatten().tolist())
         elif method == 'hansql':
-            ex = self.process_hansql(ex, db, metapaths, relation.tolist())
+            ex = self.process_hansql(ex, db, metapaths, relation.tolist(), verbose)
         return ex

@@ -14,7 +14,7 @@ class HANSQL(nn.Module):
         self.num_layers = args.gnn_num_layers
         self.ndim = args.gnn_hidden_size
         self.gnn_layers = nn.ModuleList([
-            HANSQLLayer(self.ndim, args.num_heads, args.dropout, args.node_type_share_weights)
+            HANSQLLayer(self.ndim, args.num_heads, args.dropout, args.node_type_share_weights, args.no_metapath_attention)
             for _ in range(self.num_layers)
         ])
 
@@ -25,7 +25,7 @@ class HANSQL(nn.Module):
 
 
 class HANSQLLayer(nn.Module):
-    def __init__(self, ndim, num_heads=8, feat_drop=0.2, share=False):
+    def __init__(self, ndim, num_heads=8, feat_drop=0.2, share=False, no_mp_attn=False):
         super(HANSQLLayer, self).__init__()
         self.ndim = ndim
         self.num_heads = num_heads
@@ -38,7 +38,7 @@ class HANSQLLayer(nn.Module):
             self.layernorm = nn.ModuleList([nn.LayerNorm(self.ndim)] * 3)
             self.feat_dropout = nn.ModuleList([nn.Dropout(p=feat_drop)] * 3)
             self.ffn = nn.ModuleList([FFN(self.ndim)] * 3)
-            self.mp_attn = nn.ModuleList([nn.Sequential(
+            self.mp_attn = None if no_mp_attn else nn.ModuleList([nn.Sequential(
                 nn.Linear(self.ndim, self.ndim),
                 nn.Tanh(),
                 nn.Linear(self.ndim, 1, bias=False)
@@ -51,7 +51,7 @@ class HANSQLLayer(nn.Module):
             self.layernorm = nn.ModuleList([nn.LayerNorm(self.ndim) for _ in range(3)])
             self.feat_dropout = nn.ModuleList([nn.Dropout(p=feat_drop) for _ in range(3)])
             self.ffn = nn.ModuleList([FFN(self.ndim) for _ in range(3)])
-            self.mp_attn = nn.ModuleList([nn.Sequential(
+            self.mp_attn = None if no_mp_attn else nn.ModuleList([nn.Sequential(
                 nn.Linear(self.ndim, self.ndim),
                 nn.Tanh(),
                 nn.Linear(self.ndim, 1, bias=False)
@@ -85,14 +85,17 @@ class HANSQLLayer(nn.Module):
                 out_x = self.ffn[i](out_x)
                 all_out_x[start_node_type].append(out_x)
             all_out_x[start_node_type] = torch.stack(all_out_x[start_node_type], dim=0) # metapath_num x node_num x ndim
-            attn = self.mp_attn[i](all_out_x[start_node_type]) # metapath_num x node_num x 1
-            node_nums = eval('batch.graph.%s_num' % start_node_type)
-            attn = list(attn.split(node_nums, dim=1))
-            for idx in range(len(attn)):
-                attn[idx] = attn[idx].mean(dim=1).softmax(dim=0).unsqueeze(-1).repeat(1, node_nums[idx], 1)
-            attn = torch.cat(attn, dim=1)
-            all_out_x[start_node_type] = all_out_x[start_node_type] * attn
-            all_out_x[start_node_type] = all_out_x[start_node_type].sum(dim=0) # node_num * ndim
+            if self.mp_attn is None:
+                all_out_x[start_node_type] = all_out_x[start_node_type].mean(dim=0)
+            else:
+                attn = self.mp_attn[i](all_out_x[start_node_type]) # metapath_num x node_num x 1
+                node_nums = eval('batch.graph.%s_num' % start_node_type)
+                attn = list(attn.split(node_nums, dim=1))
+                for idx in range(len(attn)):
+                    attn[idx] = attn[idx].mean(dim=1).softmax(dim=0).unsqueeze(-1).repeat(1, node_nums[idx], 1)
+                attn = torch.cat(attn, dim=1)
+                all_out_x[start_node_type] = all_out_x[start_node_type] * attn
+                all_out_x[start_node_type] = all_out_x[start_node_type].sum(dim=0) # node_num * ndim
         final_x = x.new_zeros(x.shape)
         final_x = final_x.masked_scatter_(batch.graph.question_mask.unsqueeze(-1), all_out_x['q'])
         final_x = final_x.masked_scatter_(batch.graph.table_mask.unsqueeze(-1), all_out_x['t'])

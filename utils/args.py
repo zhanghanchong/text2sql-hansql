@@ -56,6 +56,7 @@ def add_argument_encoder(arg_parser):
     arg_parser.add_argument('--relation_share_layers', action='store_true')
     arg_parser.add_argument('--relation_share_heads', action='store_true')
     arg_parser.add_argument('--node_type_share_weights', action='store_true')
+    arg_parser.add_argument('--no_metapath_attention', action='store_true')
     arg_parser.add_argument('--score_function', choices=['affine', 'bilinear', 'biaffine', 'dot'], default='affine', help='graph pruning score function')
     arg_parser.add_argument('--smoothing', type=float, default=0.15, help='label smoothing factor for graph pruning')
     return arg_parser

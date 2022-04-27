@@ -11,6 +11,7 @@ schema_aggregation=head+tail
 gnn_hidden_size=256
 gnn_num_layers=8
 node_type_share_weights='' # '--node_type_share_weights'
+no_metapath_attention='' # '--no_metapath_attention'
 score_function='affine'
 num_heads=8
 dropout=0.2
@@ -46,7 +47,7 @@ beam_size=5
 
 python scripts/text2sql.py --task $task --seed $seed --device $device $testing $read_model_path \
     --gnn_hidden_size $gnn_hidden_size --dropout $dropout --attn_drop $attn_drop --att_vec_size $att_vec_size \
-    --model $model --output_model $output_model --score_function $score_function $node_type_share_weights \
+    --model $model --output_model $output_model --score_function $score_function $node_type_share_weights $no_metapath_attention \
     --schema_aggregation $schema_aggregation --embed_size $embed_size --gnn_num_layers $gnn_num_layers --num_heads $num_heads $sep_cxt \
     --lstm $lstm --chunk_size $chunk_size --drop_connect $drop_connect --lstm_hidden_size $lstm_hidden_size --lstm_num_layers $lstm_num_layers \
     --action_embed_size $action_embed_size --field_embed_size $field_embed_size --type_embed_size $type_embed_size \

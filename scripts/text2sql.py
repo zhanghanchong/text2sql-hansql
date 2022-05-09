@@ -107,6 +107,11 @@ if not args.testing:
         start_time = time.time()
         dev_acc = decode('dev', os.path.join(exp_path, 'dev.iter' + str(i)), acc_type='sql')
         logger.info('Evaluation: \tEpoch: %d\tTime: %.4f\tDev acc: %.4f' % (i, time.time() - start_time, dev_acc))
+        torch.save({
+            'epoch': i,
+            'model': model.state_dict(),
+            'scheduler': scheduler.state_dict()
+        }, open(os.path.join(exp_path, 'model_last_epoch.bin'), 'wb'))
         if dev_acc > best_result['dev_acc']:
             best_result['dev_acc'], best_result['iter'] = dev_acc, i
             torch.save({
